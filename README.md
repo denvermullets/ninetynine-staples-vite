@@ -26,7 +26,7 @@ I opted to created my own database so that the client would only have to make 1 
 
 ## Installation
 
-Installation is pretty standard, use yarn/npm to install.
+Installation is pretty standard, use `yarn install`.
 
 ### Front-end
 
