@@ -22,10 +22,8 @@ const SignUp: React.FC = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
-    if (email && password && username) {
-      const success = await createAccount(email, password, username);
-      success && navigate("/");
-    }
+    const success = await createAccount(email, password, username);
+    success && navigate("/");
   };
 
   return (
