@@ -8,8 +8,6 @@ import { selectBoxStyles } from "../../components/ChakraReactSelect/helpers";
 import { SelectOptions } from "../../models/Boxset.model";
 
 const Boxsets: React.FC = () => {
-  // const [userCollection, setUserCollection] = useState([]);
-  // const [loading, setLoading] = useState<boolean>(false);
   const { collectionOptions } = useContext(UserCollections);
   const { colorMode } = useColorMode();
   const navigate = useNavigate();
@@ -17,11 +15,7 @@ const Boxsets: React.FC = () => {
   const params = useParams();
   console.log("boxsets: ", boxsets);
   console.log("selectedBoxset: ", selectedBoxset);
-  // so there's some weird stuff going on with chakra-react-select / react-select
-  // v4.7.0 wasn't working with useBasicStyles, and now it's not typing properly(?)
-  // tbh, i kinda don't care at this point
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const filterOptions = (option: SelectOptions, inputValue: string) => {
     return (
       option.label.toLowerCase().includes(inputValue.toLowerCase()) ||
@@ -29,6 +23,7 @@ const Boxsets: React.FC = () => {
     );
   };
 
+  // saving for reference on how to pass state, tbd
   // const handleBoxsetChange = (e) => {
   //   navigate({ search: `?boxset=${e.value}` });
   // const posts = await fetchPosts(params.category, state.userId);
