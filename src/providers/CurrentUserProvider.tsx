@@ -1,15 +1,15 @@
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { useState, createContext, ReactNode, useEffect } from "react";
-import config from "../config";
-import { UserModel } from "../models/User.model";
+import User, { UserRecord } from "../models/User.model";
 import { useCookies } from "react-cookie";
+import { handleAxiosError } from "../helpers/axiosErrors";
 
 type ProviderProps = {
   children: ReactNode;
 };
 
 export type CurrentUserContext = {
-  currentUser: UserModel | null;
+  currentUser: UserRecord | null;
   login: (email: string, password: string, rememberMe: boolean) => Promise<boolean>;
   createAccount: (email: string, password: string, username: string) => Promise<boolean>;
   emailError: boolean;
@@ -28,28 +28,19 @@ export const UserContext = createContext<CurrentUserContext>({
 });
 
 export const CurrentUserProvider = ({ children }: ProviderProps) => {
-  const [currentUser, setCurrentUser] = useState<UserModel | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserRecord | null>(null);
   const [emailError, setEmailError] = useState<boolean>(false);
   const [passwordError, setPasswordError] = useState<boolean>(false);
   const [usernameError, setUsernameError] = useState<boolean>(false);
   const [cookies, setCookie] = useCookies(["ninetynine_staples"]);
 
-  const handleAxiosError = (error: unknown | AxiosError, username: boolean) => {
-    if (axios.isAxiosError(error)) {
-      const axiosError: AxiosError = error;
-
-      if (axiosError.response?.status === 401) {
-        setEmailError(true);
-        setPasswordError(true);
-        username && setUsernameError(true);
-        return;
-      } else {
-        console.error("Something went wrong with the request");
-        throw new Error(axiosError.message);
-      }
-    } else {
-      console.error("A non-Axios error occurred:", error);
-      throw new Error("An error occurred");
+  const handlError = (error: unknown | AxiosError, username: boolean) => {
+    // this is just a catch for us to nicely handle auth errors for the user, probably is overkill for this app
+    const hasAuthError = handleAxiosError(error);
+    if (hasAuthError === "auth") {
+      setEmailError(true);
+      setPasswordError(true);
+      username && setUsernameError(true);
     }
   };
 
@@ -62,17 +53,9 @@ export const CurrentUserProvider = ({ children }: ProviderProps) => {
     }
 
     try {
-      const loginRequest = await axios.post(`${config.API_URL}/login`, {
-        player: {
-          email: email,
-          password: password,
-        },
-      });
+      const user = await User.login(email, password);
 
-      if (loginRequest.status === 200) {
-        const { email, created_at, updated_at, id, username } = loginRequest.data.player;
-        const token = loginRequest.data.token;
-        const user = { email, created_at, updated_at, id, username, token };
+      if (user) {
         setCurrentUser(user);
 
         if (rememberMe) {
@@ -86,9 +69,10 @@ export const CurrentUserProvider = ({ children }: ProviderProps) => {
         }
         return true;
       }
+
       return false;
     } catch (error) {
-      handleAxiosError(error, false);
+      handlError(error, false);
       return false;
     }
   };
@@ -103,24 +87,15 @@ export const CurrentUserProvider = ({ children }: ProviderProps) => {
     }
 
     try {
-      const createUser = await axios.post(`${config.API_URL}/players`, {
-        player: {
-          username: username,
-          password: password,
-          email: email,
-        },
-      });
+      const createUser = await User.createUser(username, password, email);
 
-      if (createUser.status === 200) {
-        const { email, created_at, updated_at, id, username } = createUser.data.player;
-        const token = createUser.data.token;
-        const user = { email, created_at, updated_at, id, username, token };
-        setCurrentUser(user);
+      if (createUser) {
+        setCurrentUser(createUser);
         return true;
       }
       return false;
     } catch (error) {
-      handleAxiosError(error, true);
+      handlError(error, true);
       return false;
     }
   };

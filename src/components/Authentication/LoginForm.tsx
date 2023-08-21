@@ -23,11 +23,8 @@ const LoginForm: React.FC = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
-    if (email && password) {
-      const success = await login(email, password, remember);
-
-      success && navigate("/");
-    }
+    const success = await login(email, password, remember);
+    success && navigate("/");
   };
 
   return (
